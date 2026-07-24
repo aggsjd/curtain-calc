@@ -140,10 +140,10 @@ select.form-input{background:#fff;padding-right:8px}
         <div class="form-group"><label>高度 (米)</label><input class="form-input" id="win-height" type="number" step="0.01" min="0" placeholder="2.8"></div>
       </div>
 
-      <div class="checkbox-row" onclick="toggleCheckbox('win-no-fabric','toggleNoFabric')">
-        <input type="checkbox" id="win-no-fabric">
+      <label class="checkbox-row">
+        <input type="checkbox" id="win-no-fabric" onclick="toggleNoFabric()">
         <span>不需要布料</span>
-      </div>
+      </label>
       <div id="fabric-section">
         <div class="form-group"><label>布料价格档位</label><select class="form-input" id="win-fabric-tier"></select></div>
         <div class="collapse-header" onclick="toggleCollapse(this)">
@@ -154,10 +154,10 @@ select.form-input{background:#fff;padding-right:8px}
         </div>
       </div>
 
-      <div class="checkbox-row" onclick="toggleCheckbox('win-has-sheer','toggleSheer')">
-        <input type="checkbox" id="win-has-sheer">
+      <label class="checkbox-row">
+        <input type="checkbox" id="win-has-sheer" onclick="toggleSheer()">
         <span>有纱帘</span>
-      </div>
+      </label>
       <div id="sheer-section" class="sub-section hidden">
         <div class="form-group"><label>纱帘价格档位</label><select class="form-input" id="win-sheer-tier"></select></div>
         <div class="collapse-header" onclick="toggleCollapse(this)">
@@ -168,23 +168,23 @@ select.form-input{background:#fff;padding-right:8px}
         </div>
       </div>
 
-      <div class="checkbox-row" onclick="toggleCheckbox('win-has-lace','toggleLace')">
-        <input type="checkbox" id="win-has-lace">
+      <label class="checkbox-row">
+        <input type="checkbox" id="win-has-lace" onclick="toggleLace()">
         <span>有花边</span>
-      </div>
+      </label>
       <div id="lace-section" class="sub-section hidden">
         <div class="form-group"><label>花边价格档位</label><select class="form-input" id="win-lace-tier"></select></div>
       </div>
 
-      <div class="checkbox-row" onclick="toggleCheckbox('win-has-side')">
+      <label class="checkbox-row">
         <input type="checkbox" id="win-has-side">
         <span>有立边（+¥50）</span>
-      </div>
+      </label>
 
-      <div class="checkbox-row" onclick="toggleCheckbox('win-has-extras','toggleExtras')">
-        <input type="checkbox" id="win-has-extras">
+      <label class="checkbox-row">
+        <input type="checkbox" id="win-has-extras" onclick="toggleExtras()">
         <span>有附加费用</span>
-      </div>
+      </label>
       <div id="extras-section" class="sub-section hidden" style="padding-left:0;border-left:none;">
         <div id="extras-list"></div>
       </div>
