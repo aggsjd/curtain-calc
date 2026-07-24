@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>窗帘计价助手</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="窗帘计价">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"Microsoft YaHei",sans-serif;background:#f5f5f5;color:#333;font-size:15px;-webkit-user-select:none;user-select:none}
+.page{display:none;max-width:480px;margin:0 auto;background:#fff;min-height:100vh;position:relative}
+.page.active{display:block}
+.header{background:#2c3e50;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.header h2{font-size:17px;flex:1}
+.back-btn{font-size:22px;cursor:pointer;line-height:1;padding:0 4px}
+.body{padding:16px;padding-bottom:32px}
+.btn{display:block;width:100%;padding:12px;border:none;border-radius:8px;font-size:15px;cursor:pointer;text-align:center;font-family:inherit}
+.btn-primary{background:#2c3e50;color:#fff}
+.btn-primary:active{background:#1a252f}
+.btn-success{background:#27ae60;color:#fff}
+.btn-success:active{background:#1e8449}
+.btn-outline{background:transparent;border:1.5px solid #2c3e50;color:#2c3e50}
+.btn-sm{padding:6px 12px;width:auto;display:inline-block;font-size:13px;border-radius:5px}
+.btn-danger{background:#e74c3c;color:#fff}
+.btn-group{display:flex;gap:8px;margin-top:16px}
+.btn-group .btn{flex:1}
+.menu-card{background:#fff;border-radius:12px;padding:20px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);cursor:pointer}
+.menu-card:active{background:#f8f8f8}
+.menu-card .icon{font-size:28px;margin-bottom:6px}
+.menu-card .title{font-size:17px;font-weight:600}
+.menu-card .desc{font-size:13px;color:#888;margin-top:4px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;color:#666;margin-bottom:4px;font-weight:500}
+.form-input{width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:6px;font-size:15px;font-family:inherit;-webkit-appearance:none;appearance:none}
+.form-input:focus{outline:none;border-color:#2c3e50}
+.form-row{display:flex;gap:10px}
+.form-row .form-group{flex:1}
+select.form-input{background:#fff;padding-right:8px}
+.checkbox-row{display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer}
+.checkbox-row input[type="checkbox"]{width:18px;height:18px}
+.collapse-header{display:flex;align-items:center;gap:6px;padding:8px 0;cursor:pointer;color:#888;font-size:13px;-webkit-user-select:none}
+.collapse-body{display:none;padding:8px 0 0 16px;border-left:2px solid #eee;margin-left:4px}
+.collapse-body.open{display:block}
+.collapse-arrow{transition:transform 0.2s;font-size:11px}
+.collapse-arrow.open{transform:rotate(90deg)}
+.order-card{background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer;border:1px solid #eee}
+.order-card:active{background:#fafafa}
+.order-card .order-top{display:flex;justify-content:space-between;align-items:center}
+.order-card .order-id{font-weight:600;color:#2c3e50}
+.order-card .order-total{font-weight:600;color:#e74c3c;font-size:16px}
+.order-card .order-meta{font-size:13px;color:#888;margin-top:4px;display:flex;gap:12px;flex-wrap:wrap}
+.window-item{background:#fafafa;border:1px solid #eee;border-radius:8px;padding:12px;margin-bottom:8px}
+.window-item .wi-header{display:flex;justify-content:space-between;align-items:center}
+.window-item .wi-name{font-weight:600;font-size:14px}
+.window-item .wi-amount{color:#e74c3c;font-weight:600}
+.window-item .wi-detail{font-size:12px;color:#777;margin-top:4px;line-height:1.6}
+.summary-box{background:#f9f9f9;border-radius:8px;padding:14px;margin:12px 0}
+.summary-line{display:flex;justify-content:space-between;padding:5px 0;font-size:14px}
+.summary-line.total{font-size:18px;font-weight:700;color:#e74c3c;border-top:1.5px solid #ddd;padding-top:10px;margin-top:6px}
+.search-bar{display:flex;gap:8px;margin-bottom:12px}
+.search-bar .form-input{flex:1}
+.filter-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.filter-tag{padding:5px 14px;border-radius:20px;font-size:13px;cursor:pointer;border:1.5px solid #ddd;background:#fff;-webkit-user-select:none}
+.filter-tag.active{background:#2c3e50;color:#fff;border-color:#2c3e50}
+.filter-tag:active{opacity:0.7}
+.empty-state{text-align:center;padding:40px 20px;color:#aaa}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+.tier-section{margin-bottom:20px;border:1px solid #eee;border-radius:10px;padding:14px}
+.tier-section h4{font-size:15px;margin-bottom:10px;color:#2c3e50}
+.tier-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f5f5f5}
+.tier-row:last-child{border-bottom:none}
+.tier-row .tier-name{flex:1;font-weight:500;font-size:14px}
+.tier-row .tier-price{color:#e74c3c;font-weight:600;min-width:70px;font-size:14px}
+.tier-actions{display:flex;gap:4px}
+.tier-edit-btn,.tier-del-btn{cursor:pointer;padding:3px 10px;border-radius:4px;font-size:12px;border:none;font-family:inherit}
+.tier-edit-btn{background:#ecf0f1;color:#2c3e50}
+.tier-del-btn{background:#fde8e8;color:#e74c3c}
+.sub-section{padding-left:14px;border-left:2px solid #eee;margin-bottom:12px;margin-top:4px}
+.sub-section.show{display:block}
+.sub-section.hidden{display:none}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;z-index:99;opacity:0;transition:opacity 0.3s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- ════════════ 首页 ════════════ -->
+<div id="page-home" class="page active">
+  <div class="header"><h2>🧮 窗帘计价助手</h2></div>
+  <div class="body">
+    <div class="menu-card" onclick="navTo('page-new-order')">
+      <div class="icon">📌</div>
+      <div class="title">新建订单</div>
+      <div class="desc">为客户创建新订单，添加多扇窗</div>
+    </div>
+    <div class="menu-card" onclick="navTo('page-history')">
+      <div class="icon">📋</div>
+      <div class="title">历史订单</div>
+      <div class="desc">查看、搜索、管理所有订单</div>
+    </div>
+    <div class="menu-card" onclick="navTo('page-settings')">
+      <div class="icon">⚙️</div>
+      <div class="title">设置</div>
+      <div class="desc">管理布料/纱帘/花边价格档位</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 新建订单 ════════════ -->
+<div id="page-new-order" class="page">
+  <div class="header"><span class="back-btn" onclick="navTo('page-home')">←</span><h2>新建订单</h2></div>
+  <div class="body">
+    <div class="form-group"><label>客户称呼</label><input class="form-input" id="order-customer" placeholder="如：张姐"></div>
+    <div class="form-group"><label>地区/小区</label><input class="form-input" id="order-region" placeholder="如：阳光花园"></div>
+    <div class="form-row">
+      <div class="form-group"><label>日期</label><input class="form-input" id="order-date" type="date"></div>
+      <div class="form-group"><label>备注</label><input class="form-input" id="order-note" placeholder="(可选)"></div>
+    </div>
+    <button class="btn btn-success" onclick="startNewOrder()">开始添加窗 →</button>
+  </div>
+</div>
+
+<!-- ════════════ 添加窗 ════════════ -->
+<div id="page-add-window" class="page">
+  <div class="header"><span class="back-btn" onclick="navTo('page-home')">←</span><h2 id="add-window-title">添加窗</h2></div>
+  <div class="body">
+    <div id="windows-list"></div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #eee;">
+      <div class="form-group"><label>窗名/位置</label><input class="form-input" id="win-name" placeholder="如：主卧"></div>
+      <div class="form-row">
+        <div class="form-group"><label>宽度 (米)</label><input class="form-input" id="win-width" type="number" step="0.01" min="0" placeholder="2.4"></div>
+        <div class="form-group"><label>高度 (米)</label><input class="form-input" id="win-height" type="number" step="0.01" min="0" placeholder="2.8"></div>
+      </div>
+
+      <div class="form-group"><label>布料价格档位</label><select class="form-input" id="win-fabric-tier"></select></div>
+      <div class="collapse-header" onclick="toggleCollapse(this)">
+        <span class="collapse-arrow">▶</span> 高级选项（布料权重）
+      </div>
+      <div class="collapse-body">
+        <div class="form-group"><label>布料权重</label><input class="form-input" id="win-fabric-weight" type="number" step="0.1" min="0.1" value="2"></div>
+      </div>
+
+      <div class="checkbox-row" onclick="toggleCheckbox('win-has-sheer')">
+        <input type="checkbox" id="win-has-sheer" onchange="toggleSheer()"><label>有纱帘</label>
+      </div>
+      <div id="sheer-section" class="sub-section hidden">
+        <div class="form-group"><label>纱帘价格档位</label><select class="form-input" id="win-sheer-tier"></select></div>
+        <div class="collapse-header" onclick="toggleCollapse(this)">
+          <span class="collapse-arrow">▶</span> 高级选项（纱帘权重）
+        </div>
+        <div class="collapse-body">
+          <div class="form-group"><label>纱帘权重</label><input class="form-input" id="win-sheer-weight" type="number" step="0.1" min="0.1" value="2"></div>
+        </div>
+      </div>
+
+      <div class="checkbox-row" onclick="toggleCheckbox('win-has-lace')">
+        <input type="checkbox" id="win-has-lace" onchange="toggleLace()"><label>有花边</label>
+      </div>
+      <div id="lace-section" class="sub-section hidden">
+        <div class="form-group"><label>花边价格档位</label><select class="form-input" id="win-lace-tier"></select></div>
+      </div>
+
+      <div class="checkbox-row" onclick="toggleCheckbox('win-has-side')">
+        <input type="checkbox" id="win-has-side"><label>有立边（+¥50）</label>
+      </div>
+
+      <div class="checkbox-row" onclick="toggleCheckbox('win-has-extras')">
+        <input type="checkbox" id="win-has-extras" onchange="toggleExtras()"><label>有附加费用</label>
+      </div>
+      <div id="extras-section" class="sub-section hidden" style="padding-left:0;border-left:none;">
+        <div id="extras-list"></div>
+      </div>
+
+      <div class="form-group"><label>备注（可选）</label><input class="form-input" id="win-note" placeholder="如：做短 10cm"></div>
+      <button class="btn btn-primary" id="add-win-btn" onclick="addWindow()">➕ 添加这扇窗</button>
+      <button class="btn btn-outline btn-sm" id="cancel-edit-btn" onclick="cancelEdit()" style="display:none;margin-top:6px;">取消编辑</button>
+      <div class="btn-group" style="margin-top:20px;">
+        <button class="btn btn-success" onclick="finishOrder()">✅ 完成，查看总汇</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 订单总汇 ════════════ -->
+<div id="page-summary" class="page">
+  <div class="header"><span class="back-btn" onclick="backFromSummary()">←</span><h2>订单总汇</h2></div>
+  <div class="body" id="summary-body"></div>
+</div>
+
+<!-- ════════════ 历史订单 ════════════ -->
+<div id="page-history" class="page">
+  <div class="header"><span class="back-btn" onclick="navTo('page-home')">←</span><h2>历史订单</h2></div>
+  <div class="body">
+    <div class="search-bar"><input class="form-input" id="history-search" placeholder="🔍 搜索客户/编号/地区…" oninput="renderHistory()"></div>
+    <div id="region-filter" class="filter-tags"></div>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<!-- ════════════ 设置 ════════════ -->
+<div id="page-settings" class="page">
+  <div class="header"><span class="back-btn" onclick="navTo('page-home')">←</span><h2>价格档位管理</h2></div>
+  <div class="body" id="settings-body"></div>
+</div>
+
+<script>
+// ═══ 数据 ═══
+const KEY = 'curtain_app_data_v2';
+function defData(){
+  return {
+    nextOrderId:1, orders:[],
+    fabricTiers:[{name:'档位A',price:28},{name:'档位B',price:38},{name:'档位C',price:48},{name:'档位D',price:58},{name:'档位E',price:78}],
+    sheerTiers:[{name:'纱A',price:18},{name:'纱B',price:25},{name:'纱C',price:35},{name:'纱D',price:45}],
+    laceTiers:[{name:'花边A',price:8},{name:'花边B',price:12},{name:'花边C',price:18},{name:'花边D',price:25}],
+  };
+}
+let D = loadData();
+let curOrder = null; // {customer,region,date,note,windows[]} 未保存草稿
+let summaryBack = 'page-home'; // 总汇返回目标
+
+function loadData(){
+  try{
+    let r=localStorage.getItem(KEY);
+    if(r){
+      let d=JSON.parse(r);
+      if(!d.fabricTiers){let dd=defData();d.fabricTiers=dd.fabricTiers;d.sheerTiers=dd.sheerTiers;d.laceTiers=dd.laceTiers}
+      return d;
+    }
+  }catch(e){}
+  return defData();
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(D))}
+
+// ═══ 导航（防误触返回）════
+let pageStack = ['page-home'];
+
+function switchPage(id, saveNav){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='page-settings')renderSettings();
+  if(id==='page-history')renderHistory();
+  if(id==='page-home')refreshHomeStats();
+  if(saveNav !== false && pageStack[pageStack.length-1] !== id){
+    pageStack.push(id);
+    history.pushState({s:pageStack.slice()}, '', location.href);
+  }
+}
+
+function navTo(id){
+  switchPage(id);
+}
+
+// 拦截手机物理返回键 / 左滑手势
+window.addEventListener('popstate', function(e){
+  if(pageStack.length <= 1){
+    // 在首页：推回一个状态，防止退出 app
+    history.pushState({s:pageStack.slice()}, '', location.href);
+    toast('已在首页', 1200);
+  } else {
+    // 回到上一页
+    pageStack.pop();
+    const prev = pageStack[pageStack.length-1];
+    if(prev) switchPage(prev, false);
+  }
+});
+
+// 初始化历史状态，填满两层，让返回键始终打在我们的拦截器上
+if(window.history.state === null){
+  history.replaceState({s:['page-home']}, '', location.href);
+}
+history.pushState({s:['page-home']}, '', location.href);
+function toast(msg, ms){
+  ms = ms || 1800;
+  let el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),ms);
+}
+
+// ═══ 首页统计 ═══
+function refreshHomeStats(){
+  let el=document.querySelector('#page-home .menu-card:nth-child(2) .desc');
+  if(el&&D.orders.length>0)el.textContent=`共 ${D.orders.length} 个订单，最新：${D.orders[0].date}`;
+}
+
+// ═══ 设置 ═══
+function renderSettings(){
+  const b=document.getElementById('settings-body');
+  b.innerHTML=`
+    <p style="color:#888;font-size:13px;margin-bottom:12px;">布料、纱帘、花边的价格档位分开管理，各自独立。</p>
+    <div class="tier-section">
+      <h4>🪟 布料价格档位</h4>
+      <div id="tier-fabric-list"></div>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addTier('fabric')">+ 新增布料档位</button>
+    </div>
+    <div class="tier-section">
+      <h4>🪟 纱帘价格档位</h4>
+      <div id="tier-sheer-list"></div>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addTier('sheer')">+ 新增纱帘档位</button>
+    </div>
+    <div class="tier-section">
+      <h4>🎀 花边价格档位</h4>
+      <div id="tier-lace-list"></div>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addTier('lace')">+ 新增花边档位</button>
+    </div>
+    <p style="color:#bbb;font-size:12px;text-align:center;margin-top:16px;">长按可拖动排序（手机端支持）</p>
+  `;
+  ['fabric','sheer','lace'].forEach(renderTierList);
+}
+function getTiers(type){return type==='fabric'?D.fabricTiers:type==='sheer'?D.sheerTiers:D.laceTiers;}
+function renderTierList(type){
+  const el=document.getElementById(`tier-${type}-list`);
+  const tiers=getTiers(type);
+  el.innerHTML=tiers.map((t,i)=>`<div class="tier-row">
+    <span class="tier-name">${e(t.name)}</span>
+    <span class="tier-price">¥${t.price}/米</span>
+    <span class="tier-actions">
+      <button class="tier-edit-btn" onclick="editTier('${type}',${i})">改</button>
+      <button class="tier-del-btn" onclick="delTier('${type}',${i})">×</button>
+    </span>
+  </div>`).join('');
+}
+function addTier(type){
+  const labels={fabric:'布料档位',sheer:'纱帘档位',lace:'花边档位'};
+  const name=prompt(`${labels[type]}名称：`);
+  if(!name)return;
+  const price=parseFloat(prompt('单价（元/米）：'));
+  if(isNaN(price)||price<=0)return toast('请输入有效价格');
+  getTiers(type).push({name,price});
+  save();renderTierList(type);refreshSelects();
+}
+function editTier(type,i){
+  const t=getTiers(type)[i];
+  const name=prompt('名称：',t.name);
+  if(!name)return;
+  const price=parseFloat(prompt('单价（元/米）：',t.price));
+  if(isNaN(price)||price<=0)return toast('请输入有效价格');
+  getTiers(type)[i]={name,price};
+  save();renderTierList(type);refreshSelects();
+}
+function delTier(type,i){
+  const t=getTiers(type)[i];
+  if(!confirm(`删除「${t.name}」？`))return;
+  getTiers(type).splice(i,1);
+  save();renderTierList(type);refreshSelects();
+}
+
+// ═══ 下拉选择器刷新 ═══
+function refreshSelects(){
+  ['fabric','sheer','lace'].forEach(type=>{
+    const selId=`win-${type}-tier`;
+    const el=document.getElementById(selId);
+    if(!el)return;
+    const v=el.value;
+    const tiers=getTiers(type);
+    el.innerHTML=tiers.map(t=>`<option value="${t.price}">${e(t.name)} (¥${t.price})</option>`).join('')
+      +`<option value="__custom__" style="color:#27ae60;font-weight:600;">✚ 临时自定义...</option>`;
+    if(v)el.value=v;
+    // 选临时自定义时立即弹窗
+    el.onchange=function(){
+      if(this.value==='__custom__'){
+        const labels={fabric:'布料单价',sheer:'纱帘单价',lace:'花边单价'};
+        const price=parseFloat(prompt(`${labels[type]}：`));
+        if(isNaN(price)||price<=0){toast('请输入有效价格');this.value='';return;}
+        const tiers=getTiers(type);
+        let idx=1;
+        while(tiers.some(t=>t.name===`临时${idx}`)) idx++;
+        tiers.push({name:`临时${idx}`,price});
+        save();
+        refreshSelects();
+        document.getElementById(selId).value=price;
+      }
+    };
+  });
+}
+
+let editIndex = -1; // -1=新增模式, >=0=正在编辑第几扇窗
+
+// ═══ 新建订单 ═══
+function startNewOrder(){
+  const cust=cleanText(document.getElementById('order-customer').value);
+  const reg=cleanText(document.getElementById('order-region').value);
+  const date=document.getElementById('order-date').value||today();
+  const note=cleanText(document.getElementById('order-note').value);
+  if(!cust)return toast('请输入客户称呼');
+  if(!reg)return toast('请输入地区/小区');
+  curOrder={customer:cust,region:reg,date,note,windows:[]};
+  document.getElementById('add-window-title').textContent=`添加窗 - ${cust}`;
+  refreshSelects();
+  // 重置高级选项折叠状态和纱帘/花边勾选
+  document.querySelectorAll('.collapse-body').forEach(el=>{el.classList.remove('open');el.previousElementSibling.querySelector('.collapse-arrow')?.classList.remove('open')});
+  document.getElementById('win-has-sheer').checked=false;toggleSheer();
+  document.getElementById('win-has-lace').checked=false;toggleLace();
+  editIndex=-1;
+  resetForm();
+  document.getElementById('cancel-edit-btn').style.display='none';
+  renderWindows();
+  navTo('page-add-window');
+}
+
+function renderWindows(){
+  const el=document.getElementById('windows-list');
+  if(!curOrder||curOrder.windows.length===0){
+    el.innerHTML='<p style="color:#999;font-size:14px;padding:8px 0;">还没有添加窗，请在下方添加第一扇窗。</p>';
+    return;
+  }
+  el.innerHTML=curOrder.windows.map((w,i)=>{
+    let d=`布料 ¥${w.fp}×${w.w}m×${w.fw}`;
+    if(w.hs)d+=` · 纱帘 ¥${w.sp}×${w.w}m×${w.sw}`;
+    if(w.hl)d+=` · 花边 ¥${w.lp}×${w.h}m×2`;
+    if(w.hasSide)d+=` · 立边 ¥50`;
+    if(w.extras&&w.extras.length) w.extras.forEach(e=>{d+=` · ${e.name} ¥${e.price}`;});
+    if(w.note)d+=` · 📝 ${e(w.note)}`;
+    const isEditing = (editIndex === i);
+    return `<div class="window-item" style="${isEditing?'border-color:#2c3e50;background:#f0f4f8;':''}">
+      <div class="wi-header"><span class="wi-name">${i+1}. ${e(w.name)}</span><span class="wi-amount">¥${w.sub.toFixed(2)}</span></div>
+      <div class="wi-detail">${d}</div>
+      <div style="margin-top:8px;display:flex;gap:6px;">
+        <button class="btn btn-sm btn-outline" onclick="editWindow(${i})" style="padding:4px 10px;font-size:12px;">✏️ 编辑</button>
+        <button class="btn btn-sm" onclick="deleteWindow(${i})" style="padding:4px 10px;font-size:12px;background:#fde8e8;color:#e74c3c;border:1px solid #f5c6c6;border-radius:5px;">🗑️ 删除</button>
+        ${isEditing?'<span style="font-size:12px;color:#2c3e50;margin-left:auto;align-self:center;">← 正在编辑此窗</span>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteWindow(i){
+  if(!confirm(`删除「${curOrder.windows[i].name}」？`))return;
+  curOrder.windows.splice(i,1);
+  if(editIndex === i) editIndex = -1;
+  else if(editIndex > i) editIndex--;
+  renderWindows();
+  // 如果删除后列表空了，重置表单
+  if(curOrder.windows.length===0) resetForm();
+}
+
+function editWindow(i){
+  const w=curOrder.windows[i];
+  editIndex=i;
+  // 回填表单
+  document.getElementById('win-name').value=w.name;
+  document.getElementById('win-width').value=w.w;
+  document.getElementById('win-height').value=w.h;
+  document.getElementById('win-fabric-tier').value=w.fp;
+  document.getElementById('win-fabric-weight').value=w.fw;
+  document.getElementById('win-has-sheer').checked=w.hs; toggleSheer();
+  if(w.hs){
+    document.getElementById('win-sheer-tier').value=w.sp;
+    document.getElementById('win-sheer-weight').value=w.sw;
+  }
+  document.getElementById('win-has-lace').checked=w.hl; toggleLace();
+  if(w.hl) document.getElementById('win-lace-tier').value=w.lp;
+  document.getElementById('win-has-side').checked=!!w.hasSide;
+  document.getElementById('win-has-extras').checked=!!(w.extras&&w.extras.length);
+  toggleExtras();
+  renderExtras(w.extras||[]);
+  document.getElementById('win-note').value=w.note||'';
+  // 切换按钮
+  const btn=document.getElementById('add-win-btn');
+  btn.textContent='✅ 保存修改';
+  btn.onclick=saveEdit;
+  document.getElementById('cancel-edit-btn').style.display='block';
+  renderWindows();
+  // 滚动到表单区
+  document.querySelector('#page-add-window .body').scrollTop=9999;
+}
+
+function saveEdit(){
+  if(editIndex<0)return;
+  const data=gatherFormData();
+  if(!data)return;
+  data.sub=calcWin(data);
+  curOrder.windows[editIndex]=data;
+  editIndex=-1;
+  document.getElementById('cancel-edit-btn').style.display='none';
+  resetForm();
+  renderWindows();
+  toast('✅ 已修改');
+}
+
+function cancelEdit(){
+  if(editIndex>=0){
+    editIndex=-1;
+    resetForm();
+    renderWindows();
+  }
+}
+
+function resetForm(){
+  editIndex=-1;
+  document.getElementById('win-name').value='';
+  document.getElementById('win-width').value='';
+  document.getElementById('win-height').value='';
+  document.getElementById('win-note').value='';
+  document.getElementById('win-fabric-weight').value=2;
+  document.getElementById('win-sheer-weight').value=2;
+  document.getElementById('win-has-sheer').checked=false;toggleSheer();
+  document.getElementById('win-has-lace').checked=false;toggleLace();
+  document.getElementById('win-has-side').checked=false;
+  document.getElementById('win-has-extras').checked=false;toggleExtras();
+  const btn=document.getElementById('add-win-btn');
+  btn.textContent='➕ 添加这扇窗';
+  btn.onclick=addWindow;
+  document.getElementById('cancel-edit-btn').style.display='none';
+}
+
+/** 收集表单数据（不校验），供 addWindow 和 saveEdit 共用 */
+function gatherFormData(){
+  const name=cleanText(document.getElementById('win-name').value);
+  const w=parseFloat(document.getElementById('win-width').value);
+  const h=parseFloat(document.getElementById('win-height').value);
+  let fp=parseFloat(document.getElementById('win-fabric-tier').value);
+  const fw=parseFloat(document.getElementById('win-fabric-weight').value)||2;
+  const hs=document.getElementById('win-has-sheer').checked;
+  let sp=hs?parseFloat(document.getElementById('win-sheer-tier').value):0;
+  const sw=hs?parseFloat(document.getElementById('win-sheer-weight').value)||2:0;
+  const hl=document.getElementById('win-has-lace').checked;
+  let lp=hl?parseFloat(document.getElementById('win-lace-tier').value):0;
+  const note=cleanText(document.getElementById('win-note').value);
+
+  if(!name)return toast('请输入窗名');
+  if(isNaN(w)||w<=0)return toast('请输入有效宽度');
+  if(isNaN(h)||h<=0)return toast('请输入有效高度');
+
+  if(isNaN(fp)||fp<=0)return toast('请选择布料价格档位');
+  if(hs&&(isNaN(sp)||sp<=0))return toast('请选择纱帘价格档位');
+  if(hl&&(isNaN(lp)||lp<=0))return toast('请选择花边价格档位');
+
+  // 立边
+  const hasSide=document.getElementById('win-has-side').checked;
+  // 其他费用
+  const extras=[];
+  if(document.getElementById('win-has-extras').checked){
+    document.querySelectorAll('#extras-list .extra-row').forEach(row=>{
+      const name=cleanText(row.querySelector('.extra-name').value);
+      const price=parseFloat(row.querySelector('.extra-price').value);
+      if(name&&!isNaN(price)&&price>0) extras.push({name,price});
+    });
+  }
+
+  return {name,w,h,fp,fw,hs,sp,sw,hl,lp,hasSide,extras,note,sub:0};
+}
+
+function promptCustomTier(type,label){
+  const price=parseFloat(prompt(`${label}：`));
+  if(isNaN(price)||price<=0){toast('请输入有效价格');return null;}
+  // 生成临时档位名称
+  const tiers=getTiers(type);
+  let idx=1;
+  while(tiers.some(t=>t.name===`临时${idx}`)) idx++;
+  tiers.push({name:`临时${idx}`,price});
+  save();
+  refreshSelects();
+  // 选中新档位
+  document.getElementById(`win-${type}-tier`).value=price;
+  return price;
+}
+
+function calcWin(w){
+  let t=w.fp*(w.w||0)*(w.fw||2);
+  if(w.hs)t+=w.sp*(w.w||0)*(w.sw||2);
+  if(w.hl)t+=w.lp*(w.h||0)*2;
+  if(w.hasSide)t+=50;
+  if(w.extras&&w.extras.length)t+=w.extras.reduce((s,e)=>s+e.price,0);
+  return t;
+}
+
+function addWindow(){
+  const data=gatherFormData();
+  if(!data)return;
+  data.sub=calcWin(data);
+  curOrder.windows.push(data);
+  // 清空窗名和尺寸，保留其他
+  document.getElementById('win-name').value='';
+  document.getElementById('win-width').value='';
+  document.getElementById('win-height').value='';
+  document.getElementById('win-note').value='';
+  renderWindows();
+  toast('✅ 已添加');
+}
+
+function finishOrder(){
+  if(!curOrder||curOrder.windows.length===0)return toast('请至少添加一扇窗');
+  const order={
+    id:D.nextOrderId++,
+    customer:curOrder.customer,region:curOrder.region,date:curOrder.date,
+    note:curOrder.note,
+    windows:curOrder.windows.map(w=>({...w})),
+    total:curOrder.windows.reduce((s,w)=>s+w.sub,0),
+    createdAt:new Date().toISOString()
+  };
+  D.orders.unshift(order);
+  save();
+  curOrder=null;
+  summaryBack='page-home';
+  showOrderSummary(order);
+}
+
+// ═══ 订单总汇 ═══
+function showOrderSummary(order){
+  const el=document.getElementById('summary-body');
+  let html=`
+    <div style="margin-bottom:16px;">
+      <div style="font-size:18px;font-weight:600;">📋 #${p(order.id)} ${e(order.customer)}</div>
+      <div style="font-size:13px;color:#888;margin-top:4px;">🏘 ${e(order.region)} · 📅 ${order.date}</div>
+    </div>
+    <div style="font-size:13px;color:#888;margin-bottom:8px;">共 ${order.windows.length} 扇窗</div>`;
+  order.windows.forEach((w,i)=>{
+    let d=`布料 ¥${w.fp}/米 × ${w.w}m × ${w.fw}`;
+    if(w.hs)d+=`<br>纱帘 ¥${w.sp}/米 × ${w.w}m × ${w.sw}`;
+    if(w.hl)d+=`<br>花边 ¥${w.lp}/米 × ${w.h}m × 2`;
+    if(w.hasSide)d+=`<br>立边 +¥50`;
+    if(w.extras&&w.extras.length) w.extras.forEach(ex=>{d+=`<br>${e(ex.name)} +¥${ex.price}`;});
+    if(w.note)d+=`<br>📝 ${e(w.note)}`;
+    html+=`<div class="window-item">
+      <div class="wi-header"><span class="wi-name">${i+1}. ${e(w.name)}</span><span class="wi-amount">¥${w.sub.toFixed(2)}</span></div>
+      <div class="wi-detail">${d}</div>
+    </div>`;
+  });
+  const fTotal=order.windows.reduce((s,w)=>s+w.fp*w.w*w.fw,0);
+  const sTotal=order.windows.reduce((s,w)=>s+(w.hs?w.sp*w.w*w.sw:0),0);
+  const lTotal=order.windows.reduce((s,w)=>s+(w.hl?w.lp*w.h*2:0),0);
+  const sideTotal=order.windows.reduce((s,w)=>s+(w.hasSide?50:0),0);
+  const extraTotal=order.windows.reduce((s,w)=>s+(w.extras?w.extras.reduce((a,e)=>a+e.price,0):0),0);
+  html+=`<div class="summary-box">
+    <div class="summary-line"><span>布料费用</span><span>¥${fTotal.toFixed(2)}</span></div>`;
+  if(sTotal>0)html+=`<div class="summary-line"><span>纱帘费用</span><span>¥${sTotal.toFixed(2)}</span></div>`;
+  if(lTotal>0)html+=`<div class="summary-line"><span>花边费用</span><span>¥${lTotal.toFixed(2)}</span></div>`;
+  if(sideTotal>0)html+=`<div class="summary-line"><span>立边费用</span><span>¥${sideTotal.toFixed(2)}</span></div>`;
+  if(extraTotal>0)html+=`<div class="summary-line"><span>其他费用</span><span>¥${extraTotal.toFixed(2)}</span></div>`;
+  html+=`<div class="summary-line total"><span>订单总金额</span><span>¥${order.total.toFixed(2)}</span></div></div>`;
+  html+=`<button class="btn btn-primary" onclick="copyOrderText()" style="margin-top:8px;">📋 复制订单文本</button>`;
+  html+=`<button class="btn btn-outline" onclick="backFromSummary()" style="margin-top:8px;">← 返回</button>`;
+  el.innerHTML=html;
+  navTo('page-summary');
+}
+
+function copyOrderText(){
+  const b=document.getElementById('summary-body');
+  const txt=b.textContent.replace(/返回$/,'').trim();
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>toast('✅ 已复制')).catch(()=>fallbackCopy(txt));}
+  else fallbackCopy(txt);
+}
+function fallbackCopy(t){
+  const ta=document.createElement('textarea');
+  ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');toast('✅ 已复制')}catch(e){toast('复制失败，请手动复制')}
+  document.body.removeChild(ta);
+}
+
+function backFromSummary(){
+  // 从总汇快速跳转到目标页（跳过中间页面）
+  const target = summaryBack || 'page-home';
+  const idx = pageStack.lastIndexOf(target);
+  if(idx >= 0){
+    pageStack = pageStack.slice(0, idx+1);
+  } else {
+    pageStack = [target];
+  }
+  switchPage(target, false);
+  history.replaceState({s:pageStack.slice()}, '', location.href);
+}
+
+// ═══ 历史订单 ═══
+let curRegion='';
+function renderHistory(){
+  const raw=document.getElementById('history-search').value;
+  const q=cleanText(raw).toLowerCase();
+  let orders=D.orders;
+  if(q)orders=orders.filter(o=>{
+    const c=cleanText(o.customer).toLowerCase();
+    const r=cleanText(o.region||'').toLowerCase();
+    const n=cleanText(o.note||'').toLowerCase();
+    return c.includes(q)||`#${p(o.id)}`.includes(q)||r.includes(q)||n.includes(q);
+  });
+  const regions=[...new Set(D.orders.map(o=>o.region).filter(Boolean))];
+  const fel=document.getElementById('region-filter');
+  fel.innerHTML=`<span class="filter-tag ${!curRegion?'active':''}" onclick="setRegion('')">全部</span>`
+    +regions.map(r=>`<span class="filter-tag ${curRegion===r?'active':''}" onclick="setRegion('${e(r)}')">${e(r)}</span>`).join('');
+  if(curRegion)orders=orders.filter(o=>o.region===curRegion);
+  const lel=document.getElementById('history-list');
+  if(orders.length===0){lel.innerHTML='<div class="empty-state"><div class="icon">📭</div><div>暂无订单</div></div>';return;}
+  lel.innerHTML=orders.map(o=>{
+    const ws=o.windows.map(w=>e(w.name)).join('、');
+    return `<div class="order-card" onclick="viewOrder(${o.id})">
+      <div class="order-top"><span class="order-id">#${p(o.id)} ${e(o.customer)}</span><span class="order-total">¥${o.total.toFixed(2)}</span></div>
+      <div class="order-meta"><span>🏘 ${e(o.region)}</span><span>📅 ${o.date}</span><span>🪟 ${o.windows.length}扇</span></div>
+      <div style="font-size:12px;color:#aaa;margin-top:4px;">${e(ws)}</div>
+    </div>`;
+  }).join('');
+}
+function setRegion(r){curRegion=r;renderHistory();}
+function viewOrder(id){
+  const o=D.orders.find(x=>x.id===id);
+  if(!o)return;
+  summaryBack='page-history';
+  showOrderSummary(o);
+}
+
+// ═══ 工具 ═══
+/** 清理语音输入：去掉首尾标点、压缩空格 */
+function cleanText(s){
+  if(!s)return '';
+  // 全角/半角标点集合
+  const punct='、，。！？；：""\'\'（）【】《》〈〉「」『』〖〗〔〕…—～·,.:;!?\'"()\\[\\]{}<>「」『』';
+  const reStart=new RegExp('^[\\s'+punct+']+','g');
+  const reEnd=new RegExp('[\\s'+punct+']+$','g');
+  return String(s).replace(reStart,'').replace(reEnd,'').replace(/\\s+/g,' ');
+}
+
+function e(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function p(n){return String(n).padStart(4,'0')}
+function today(){const d=new Date();return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`}
+function toggleCollapse(h){
+  const a=h.querySelector('.collapse-arrow');
+  const b=h.nextElementSibling;
+  a.classList.toggle('open');b.classList.toggle('open');
+}
+function toggleCheckbox(id){
+  const el=document.getElementById(id);
+  el.checked=!el.checked;
+  el.dispatchEvent(new Event('change'));
+}
+function toggleSheer(){
+  const c=document.getElementById('win-has-sheer').checked;
+  document.getElementById('sheer-section').className='sub-section '+(c?'show':'hidden');
+}
+function toggleLace(){
+  const c=document.getElementById('win-has-lace').checked;
+  document.getElementById('lace-section').className='sub-section '+(c?'show':'hidden');
+}
+function toggleExtras(){
+  const c=document.getElementById('win-has-extras').checked;
+  document.getElementById('extras-section').className='sub-section '+(c?'show':'hidden');
+  if(c) renderExtras();
+}
+function renderExtras(data){
+  const el=document.getElementById('extras-list');
+  if(data && data.length){
+    // 编辑回填：直接用传入的数据
+    el.innerHTML=data.map((item,i)=>extraRowHTML(i,item.name,item.price)).join('')+'<div style="margin-top:6px;"><button class="btn btn-sm btn-outline" onclick="addExtraRow()">+ 添加一项</button></div>';
+  } else {
+    // 新建模式：检查最后一行是否已填完
+    const rows=el.querySelectorAll('.extra-row');
+    let allFilled=true;
+    rows.forEach(r=>{
+      const n=r.querySelector('.extra-name').value.trim();
+      const p=r.querySelector('.extra-price').value.trim();
+      if(!n||!p) allFilled=false;
+    });
+    if(rows.length===0||allFilled) addExtraRow();
+  }
+}
+function extraRowHTML(idx,name,price){
+  return `<div class="extra-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+    <input class="form-input extra-name" placeholder="项目名" value="${e(name||'')}" style="flex:1;padding:8px 10px;font-size:14px;" oninput="checkExtrasFilled()">
+    <input class="form-input extra-price" placeholder="金额" type="number" step="0.01" min="0" value="${price||''}" style="width:90px;padding:8px 10px;font-size:14px;" oninput="checkExtrasFilled()">
+    <button class="tier-del-btn" onclick="this.closest('.extra-row').remove()" style="padding:4px 8px;">×</button>
+  </div>`;
+}
+function addExtraRow(){
+  const el=document.getElementById('extras-list');
+  const idx=el.querySelectorAll('.extra-row').length;
+  // 如果没有"添加按钮"就加上
+  let addBtn=el.querySelector('.add-extra-btn');
+  if(!addBtn){
+    el.innerHTML+=`<div style="margin-top:6px;"><button class="btn btn-sm btn-outline add-extra-btn" onclick="addExtraRow()">+ 添加一项</button></div>`;
+    addBtn=el.querySelector('.add-extra-btn');
+  }
+  // 在添加按钮前面插入新行
+  const row=document.createElement('div');
+  row.outerHTML=extraRowHTML(idx);
+  addBtn.insertAdjacentHTML('beforebegin', extraRowHTML(idx));
+}
+function checkExtrasFilled(){
+  const el=document.getElementById('extras-list');
+  const rows=el.querySelectorAll('.extra-row');
+  let allFilled=true;
+  rows.forEach(r=>{
+    const n=r.querySelector('.extra-name').value.trim();
+    const p=r.querySelector('.extra-price').value.trim();
+    if(!n||!p) allFilled=false;
+  });
+  if(rows.length>0&&allFilled) addExtraRow();
+}
+
+// ═══ 启动 ═══
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('order-date').value=today();
+  refreshSelects();
+  refreshHomeStats();
+  // 注册 Service Worker
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js');
+  }
+});
+</script>
+</body>
+</html>
