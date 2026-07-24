@@ -139,16 +139,23 @@ select.form-input{background:#fff;padding-right:8px}
         <div class="form-group"><label>高度 (米)</label><input class="form-input" id="win-height" type="number" step="0.01" min="0" placeholder="2.8"></div>
       </div>
 
-      <div class="form-group"><label>布料价格档位</label><select class="form-input" id="win-fabric-tier"></select></div>
-      <div class="collapse-header" onclick="toggleCollapse(this)">
-        <span class="collapse-arrow">▶</span> 高级选项（布料权重）
+      <div class="checkbox-row">
+        <input type="checkbox" id="win-no-fabric" onchange="toggleNoFabric()">
+        <label for="win-no-fabric">不需要布料</label>
       </div>
-      <div class="collapse-body">
-        <div class="form-group"><label>布料权重</label><input class="form-input" id="win-fabric-weight" type="number" step="0.1" min="0.1" value="2"></div>
+      <div id="fabric-section">
+        <div class="form-group"><label>布料价格档位</label><select class="form-input" id="win-fabric-tier"></select></div>
+        <div class="collapse-header" onclick="toggleCollapse(this)">
+          <span class="collapse-arrow">▶</span> 高级选项（布料权重）
+        </div>
+        <div class="collapse-body">
+          <div class="form-group"><label>布料权重</label><input class="form-input" id="win-fabric-weight" type="number" step="0.1" min="0.1" value="2"></div>
+        </div>
       </div>
 
-      <div class="checkbox-row" onclick="toggleCheckbox('win-has-sheer')">
-        <input type="checkbox" id="win-has-sheer" onchange="toggleSheer()"><label>有纱帘</label>
+      <div class="checkbox-row">
+        <input type="checkbox" id="win-has-sheer" onchange="toggleSheer()">
+        <label for="win-has-sheer">有纱帘</label>
       </div>
       <div id="sheer-section" class="sub-section hidden">
         <div class="form-group"><label>纱帘价格档位</label><select class="form-input" id="win-sheer-tier"></select></div>
@@ -160,19 +167,22 @@ select.form-input{background:#fff;padding-right:8px}
         </div>
       </div>
 
-      <div class="checkbox-row" onclick="toggleCheckbox('win-has-lace')">
-        <input type="checkbox" id="win-has-lace" onchange="toggleLace()"><label>有花边</label>
+      <div class="checkbox-row">
+        <input type="checkbox" id="win-has-lace" onchange="toggleLace()">
+        <label for="win-has-lace">有花边</label>
       </div>
       <div id="lace-section" class="sub-section hidden">
         <div class="form-group"><label>花边价格档位</label><select class="form-input" id="win-lace-tier"></select></div>
       </div>
 
-      <div class="checkbox-row" onclick="toggleCheckbox('win-has-side')">
-        <input type="checkbox" id="win-has-side"><label>有立边（+¥50）</label>
+      <div class="checkbox-row">
+        <input type="checkbox" id="win-has-side">
+        <label for="win-has-side">有立边（+¥50）</label>
       </div>
 
-      <div class="checkbox-row" onclick="toggleCheckbox('win-has-extras')">
-        <input type="checkbox" id="win-has-extras" onchange="toggleExtras()"><label>有附加费用</label>
+      <div class="checkbox-row">
+        <input type="checkbox" id="win-has-extras" onchange="toggleExtras()">
+        <label for="win-has-extras">有附加费用</label>
       </div>
       <div id="extras-section" class="sub-section hidden" style="padding-left:0;border-left:none;">
         <div id="extras-list"></div>
@@ -381,6 +391,7 @@ function refreshSelects(){
 }
 
 let editIndex = -1; // -1=新增模式, >=0=正在编辑第几扇窗
+let editingOrderId = null; // 正在编辑的历史订单ID
 
 // ═══ 新建订单 ═══
 function startNewOrder(){
@@ -398,6 +409,7 @@ function startNewOrder(){
   document.getElementById('win-has-sheer').checked=false;toggleSheer();
   document.getElementById('win-has-lace').checked=false;toggleLace();
   editIndex=-1;
+  editingOrderId=null;
   resetForm();
   document.getElementById('cancel-edit-btn').style.display='none';
   renderWindows();
@@ -411,7 +423,7 @@ function renderWindows(){
     return;
   }
   el.innerHTML=curOrder.windows.map((w,i)=>{
-    let d=`布料 ¥${w.fp}×${w.w}m×${w.fw}`;
+    let d=w.noFabric?'无布料':`布料 ¥${w.fp}×${w.w}m×${w.fw}`;
     if(w.hs)d+=` · 纱帘 ¥${w.sp}×${w.w}m×${w.sw}`;
     if(w.hl)d+=` · 花边 ¥${w.lp}×${w.h}m×2`;
     if(w.hasSide)d+=` · 立边 ¥50`;
@@ -449,6 +461,8 @@ function editWindow(i){
   document.getElementById('win-height').value=w.h;
   document.getElementById('win-fabric-tier').value=w.fp;
   document.getElementById('win-fabric-weight').value=w.fw;
+  document.getElementById('win-no-fabric').checked=!!w.noFabric;
+  toggleNoFabric();
   document.getElementById('win-has-sheer').checked=w.hs; toggleSheer();
   if(w.hs){
     document.getElementById('win-sheer-tier').value=w.sp;
@@ -500,6 +514,8 @@ function resetForm(){
   document.getElementById('win-note').value='';
   document.getElementById('win-fabric-weight').value=2;
   document.getElementById('win-sheer-weight').value=2;
+  document.getElementById('win-no-fabric').checked=false;
+  toggleNoFabric();
   document.getElementById('win-has-sheer').checked=false;toggleSheer();
   document.getElementById('win-has-lace').checked=false;toggleLace();
   document.getElementById('win-has-side').checked=false;
@@ -528,12 +544,14 @@ function gatherFormData(){
   if(isNaN(w)||w<=0)return toast('请输入有效宽度');
   if(isNaN(h)||h<=0)return toast('请输入有效高度');
 
-  if(isNaN(fp)||fp<=0)return toast('请选择布料价格档位');
+  if(!noFabric&&(isNaN(fp)||fp<=0))return toast('请选择布料价格档位');
   if(hs&&(isNaN(sp)||sp<=0))return toast('请选择纱帘价格档位');
   if(hl&&(isNaN(lp)||lp<=0))return toast('请选择花边价格档位');
 
   // 立边
   const hasSide=document.getElementById('win-has-side').checked;
+  const noFabric=document.getElementById('win-no-fabric').checked;
+  if(noFabric){fp=0;fw=0;}
   // 其他费用
   const extras=[];
   if(document.getElementById('win-has-extras').checked){
@@ -544,7 +562,7 @@ function gatherFormData(){
     });
   }
 
-  return {name,w,h,fp,fw,hs,sp,sw,hl,lp,hasSide,extras,note,sub:0};
+  return {noFabric,name,w,h,fp,fw,hs,sp,sw,hl,lp,hasSide,extras,note,sub:0};
 }
 
 function promptCustomTier(type,label){
@@ -563,7 +581,8 @@ function promptCustomTier(type,label){
 }
 
 function calcWin(w){
-  let t=w.fp*(w.w||0)*(w.fw||2);
+  let t=0;
+  if(!w.noFabric)t+=w.fp*(w.w||0)*(w.fw||2);
   if(w.hs)t+=w.sp*(w.w||0)*(w.sw||2);
   if(w.hl)t+=w.lp*(w.h||0)*2;
   if(w.hasSide)t+=50;
@@ -588,14 +607,23 @@ function addWindow(){
 function finishOrder(){
   if(!curOrder||curOrder.windows.length===0)return toast('请至少添加一扇窗');
   const order={
-    id:D.nextOrderId++,
+    id:editingOrderId||D.nextOrderId++,
     customer:curOrder.customer,region:curOrder.region,date:curOrder.date,
     note:curOrder.note,
     windows:curOrder.windows.map(w=>({...w})),
     total:curOrder.windows.reduce((s,w)=>s+w.sub,0),
     createdAt:new Date().toISOString()
   };
-  D.orders.unshift(order);
+  if(editingOrderId){
+    // 编辑模式：替换已有订单
+    const idx=D.orders.findIndex(o=>o.id===editingOrderId);
+    if(idx>=0)D.orders[idx]=order;
+    editingOrderId=null;
+    summaryBack='page-history';
+  } else {
+    // 新建模式：插入到最前面
+    D.orders.unshift(order);
+  }
   save();
   curOrder=null;
   summaryBack='page-home';
@@ -612,7 +640,7 @@ function showOrderSummary(order){
     </div>
     <div style="font-size:13px;color:#888;margin-bottom:8px;">共 ${order.windows.length} 扇窗</div>`;
   order.windows.forEach((w,i)=>{
-    let d=`布料 ¥${w.fp}/米 × ${w.w}m × ${w.fw}`;
+    let d=w.noFabric?'无布料':`布料 ¥${w.fp}/米 × ${w.w}m × ${w.fw}`;
     if(w.hs)d+=`<br>纱帘 ¥${w.sp}/米 × ${w.w}m × ${w.sw}`;
     if(w.hl)d+=`<br>花边 ¥${w.lp}/米 × ${w.h}m × 2`;
     if(w.hasSide)d+=`<br>立边 +¥50`;
@@ -623,7 +651,7 @@ function showOrderSummary(order){
       <div class="wi-detail">${d}</div>
     </div>`;
   });
-  const fTotal=order.windows.reduce((s,w)=>s+w.fp*w.w*w.fw,0);
+  const fTotal=order.windows.reduce((s,w)=>s+(w.noFabric?0:w.fp*w.w*w.fw),0);
   const sTotal=order.windows.reduce((s,w)=>s+(w.hs?w.sp*w.w*w.sw:0),0);
   const lTotal=order.windows.reduce((s,w)=>s+(w.hl?w.lp*w.h*2:0),0);
   const sideTotal=order.windows.reduce((s,w)=>s+(w.hasSide?50:0),0);
@@ -689,10 +717,19 @@ function renderHistory(){
   if(orders.length===0){lel.innerHTML='<div class="empty-state"><div class="icon">📭</div><div>暂无订单</div></div>';return;}
   lel.innerHTML=orders.map(o=>{
     const ws=o.windows.map(w=>e(w.name)).join('、');
-    return `<div class="order-card" onclick="viewOrder(${o.id})">
-      <div class="order-top"><span class="order-id">#${p(o.id)} ${e(o.customer)}</span><span class="order-total">¥${o.total.toFixed(2)}</span></div>
-      <div class="order-meta"><span>🏘 ${e(o.region)}</span><span>📅 ${o.date}</span><span>🪟 ${o.windows.length}扇</span></div>
-      <div style="font-size:12px;color:#aaa;margin-top:4px;">${e(ws)}</div>
+    return `<div class="order-card">
+      <div class="order-top" onclick="viewOrder(${o.id})" style="cursor:pointer;">
+        <span class="order-id">#${p(o.id)} ${e(o.customer)}</span>
+        <span class="order-total">¥${o.total.toFixed(2)}</span>
+      </div>
+      <div class="order-meta" onclick="viewOrder(${o.id})" style="cursor:pointer;">
+        <span>🏘 ${e(o.region)}</span><span>📅 ${o.date}</span><span>🪟 ${o.windows.length}扇</span>
+      </div>
+      <div style="font-size:12px;color:#aaa;margin-top:4px;" onclick="viewOrder(${o.id})" style="cursor:pointer;">${e(ws)}</div>
+      <div style="margin-top:8px;display:flex;gap:6px;">
+        <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();editHistoryOrder(${o.id})" style="padding:4px 10px;font-size:12px;">✏️ 编辑</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();deleteHistoryOrder(${o.id})" style="padding:4px 10px;font-size:12px;background:#fde8e8;color:#e74c3c;border:1px solid #f5c6c6;border-radius:5px;">🗑️ 删除</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -702,6 +739,33 @@ function viewOrder(id){
   if(!o)return;
   summaryBack='page-history';
   showOrderSummary(o);
+}
+function editHistoryOrder(id){
+  const o=D.orders.find(x=>x.id===id);
+  if(!o)return;
+  // 加载到编辑状态
+  editingOrderId=id;
+  document.getElementById('order-customer').value=o.customer;
+  document.getElementById('order-region').value=o.region;
+  document.getElementById('order-date').value=o.date;
+  document.getElementById('order-note').value=o.note||'';
+  curOrder={
+    customer:o.customer,region:o.region,date:o.date,
+    note:o.note||'',windows:o.windows.map(w=>({...w}))
+  };
+  document.getElementById('add-window-title').textContent=`编辑订单 - ${o.customer}`;
+  refreshSelects();
+  editIndex=-1;
+  resetForm();
+  document.getElementById('cancel-edit-btn').style.display='none';
+  renderWindows();
+  navTo('page-add-window');
+  toast('已加载订单，可增删改窗');
+}
+function deleteHistoryOrder(id){
+  if(!confirm('确认删除此订单？此操作不可恢复。'))return;
+  const idx=D.orders.findIndex(x=>x.id===id);
+  if(idx>=0){D.orders.splice(idx,1);save();renderHistory();toast('已删除');}
 }
 
 // ═══ 工具 ═══
@@ -723,10 +787,9 @@ function toggleCollapse(h){
   const b=h.nextElementSibling;
   a.classList.toggle('open');b.classList.toggle('open');
 }
-function toggleCheckbox(id){
-  const el=document.getElementById(id);
-  el.checked=!el.checked;
-  el.dispatchEvent(new Event('change'));
+function toggleNoFabric(){
+  const c=document.getElementById('win-no-fabric').checked;
+  document.getElementById('fabric-section').style.display=c?'none':'block';
 }
 function toggleSheer(){
   const c=document.getElementById('win-has-sheer').checked;
