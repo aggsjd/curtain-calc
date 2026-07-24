@@ -1,4 +1,4 @@
-const CACHE = 'curtain-calc-v1';
+const CACHE = 'curtain-calc-v2';
 const URLS = ['/curtain-calc/', '/curtain-calc/index.html', '/curtain-calc/manifest.json', '/curtain-calc/icon.svg'];
 
 self.addEventListener('install', e => {
