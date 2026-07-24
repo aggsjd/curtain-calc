@@ -2,7 +2,7 @@
   "name": "窗帘计价助手",
   "short_name": "窗帘计价",
   "description": "窗帘店日常计价工具 — 多窗一单，自动合计",
-  "start_url": "/",
+  "start_url": "/curtain-calc/",
   "display": "standalone",
   "background_color": "#f5f5f5",
   "theme_color": "#2c3e50",
