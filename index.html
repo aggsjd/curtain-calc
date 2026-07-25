@@ -140,10 +140,10 @@ select.form-input{background:#fff;padding-right:8px}
         <div class="form-group"><label>高度 (米)</label><input class="form-input" id="win-height" type="number" step="0.01" min="0" placeholder="2.8"></div>
       </div>
 
-      <label class="checkbox-row">
-        <input type="checkbox" id="win-no-fabric" onclick="toggleNoFabric()">
+      <div class="checkbox-row" onclick="toggleCheck('win-no-fabric')">
+        <input type="checkbox" id="win-no-fabric">
         <span>不需要布料</span>
-      </label>
+      </div>
       <div id="fabric-section">
         <div class="form-group"><label>布料价格档位</label><select class="form-input" id="win-fabric-tier"></select></div>
         <div class="collapse-header" onclick="toggleCollapse(this)">
@@ -154,10 +154,10 @@ select.form-input{background:#fff;padding-right:8px}
         </div>
       </div>
 
-      <label class="checkbox-row">
-        <input type="checkbox" id="win-has-sheer" onclick="toggleSheer()">
+      <div class="checkbox-row" onclick="toggleCheck('win-has-sheer')">
+        <input type="checkbox" id="win-has-sheer">
         <span>有纱帘</span>
-      </label>
+      </div>
       <div id="sheer-section" class="sub-section hidden">
         <div class="form-group"><label>纱帘价格档位</label><select class="form-input" id="win-sheer-tier"></select></div>
         <div class="collapse-header" onclick="toggleCollapse(this)">
@@ -168,23 +168,23 @@ select.form-input{background:#fff;padding-right:8px}
         </div>
       </div>
 
-      <label class="checkbox-row">
-        <input type="checkbox" id="win-has-lace" onclick="toggleLace()">
+      <div class="checkbox-row" onclick="toggleCheck('win-has-lace')">
+        <input type="checkbox" id="win-has-lace">
         <span>有花边</span>
-      </label>
+      </div>
       <div id="lace-section" class="sub-section hidden">
         <div class="form-group"><label>花边价格档位</label><select class="form-input" id="win-lace-tier"></select></div>
       </div>
 
-      <label class="checkbox-row">
+      <div class="checkbox-row" onclick="toggleCheck('win-has-side')">
         <input type="checkbox" id="win-has-side">
         <span>有立边（+¥50）</span>
-      </label>
+      </div>
 
-      <label class="checkbox-row">
-        <input type="checkbox" id="win-has-extras" onclick="toggleExtras()">
+      <div class="checkbox-row" onclick="toggleCheck('win-has-extras')">
+        <input type="checkbox" id="win-has-extras">
         <span>有附加费用</span>
-      </label>
+      </div>
       <div id="extras-section" class="sub-section hidden" style="padding-left:0;border-left:none;">
         <div id="extras-list"></div>
       </div>
@@ -788,80 +788,75 @@ function toggleCollapse(h){
   const b=h.nextElementSibling;
   a.classList.toggle('open');b.classList.toggle('open');
 }
-function toggleCheckbox(id,fn){
-  const el=document.getElementById(id);
-  if(!el)return;
-  el.checked=!el.checked;
-  if(fn){
-    const f=window[fn];
-    if(typeof f==='function') f();
+// ═══ 统一的复选框切换（手机桌面通用）════
+function toggleCheck(id){
+  const cb=document.getElementById(id);
+  if(!cb)return;
+  const show=!cb.checked;
+  cb.checked=show;
+  switch(id){
+    case 'win-no-fabric': toggleNoFabric(show); break;
+    case 'win-has-sheer': toggleSheer(show); break;
+    case 'win-has-lace': toggleLace(show); break;
+    case 'win-has-extras': toggleExtras(show); break;
   }
 }
-function toggleNoFabric(){
-  const c=document.getElementById('win-no-fabric').checked;
-  document.getElementById('fabric-section').style.display=c?'none':'block';
+
+function toggleNoFabric(show){
+  if(show===undefined) show=document.getElementById('win-no-fabric').checked;
+  document.getElementById('fabric-section').style.display=show?'none':'block';
 }
-function toggleSheer(){
-  const c=document.getElementById('win-has-sheer').checked;
-  document.getElementById('sheer-section').className='sub-section '+(c?'show':'hidden');
+function toggleSheer(show){
+  if(show===undefined) show=document.getElementById('win-has-sheer').checked;
+  document.getElementById('sheer-section').className='sub-section '+(show?'show':'hidden');
 }
-function toggleLace(){
-  const c=document.getElementById('win-has-lace').checked;
-  document.getElementById('lace-section').className='sub-section '+(c?'show':'hidden');
+function toggleLace(show){
+  if(show===undefined) show=document.getElementById('win-has-lace').checked;
+  document.getElementById('lace-section').className='sub-section '+(show?'show':'hidden');
 }
-function toggleExtras(){
-  const c=document.getElementById('win-has-extras').checked;
-  document.getElementById('extras-section').className='sub-section '+(c?'show':'hidden');
-  if(c) renderExtras();
+function toggleExtras(show){
+  if(show===undefined) show=document.getElementById('win-has-extras').checked;
+  document.getElementById('extras-section').className='sub-section '+(show?'show':'hidden');
+  if(show){
+    document.getElementById('extras-list').innerHTML='';
+    addExtraRow();
+  }
 }
+
 function renderExtras(data){
   const el=document.getElementById('extras-list');
+  el.innerHTML='';
   if(data && data.length){
-    // 编辑回填：直接用传入的数据
-    el.innerHTML=data.map((item,i)=>extraRowHTML(i,item.name,item.price)).join('')+'<div style="margin-top:6px;"><button class="btn btn-sm btn-outline" onclick="addExtraRow()">+ 添加一项</button></div>';
-  } else {
-    // 新建模式：检查最后一行是否已填完
-    const rows=el.querySelectorAll('.extra-row');
-    let allFilled=true;
-    rows.forEach(r=>{
-      const n=r.querySelector('.extra-name').value.trim();
-      const p=r.querySelector('.extra-price').value.trim();
-      if(!n||!p) allFilled=false;
-    });
-    if(rows.length===0||allFilled) addExtraRow();
+    data.forEach(item=>el.insertAdjacentHTML('beforeend',extraRowHTML(item.name,item.price)));
+  }else{
+    addExtraRow();
   }
 }
-function extraRowHTML(idx,name,price){
+
+function extraRowHTML(name,price){
   return `<div class="extra-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
     <input class="form-input extra-name" placeholder="项目名" value="${e(name||'')}" style="flex:1;padding:8px 10px;font-size:14px;" oninput="checkExtrasFilled()">
     <input class="form-input extra-price" placeholder="金额" type="number" step="0.01" min="0" value="${price||''}" style="width:90px;padding:8px 10px;font-size:14px;" oninput="checkExtrasFilled()">
     <button class="tier-del-btn" onclick="this.closest('.extra-row').remove()" style="padding:4px 8px;">×</button>
   </div>`;
 }
+
 function addExtraRow(){
   const el=document.getElementById('extras-list');
-  const idx=el.querySelectorAll('.extra-row').length;
-  // 如果没有"添加按钮"就加上
-  let addBtn=el.querySelector('.add-extra-btn');
-  if(!addBtn){
-    el.innerHTML+=`<div style="margin-top:6px;"><button class="btn btn-sm btn-outline add-extra-btn" onclick="addExtraRow()">+ 添加一项</button></div>`;
-    addBtn=el.querySelector('.add-extra-btn');
-  }
-  // 在添加按钮前面插入新行
-  const row=document.createElement('div');
-  row.outerHTML=extraRowHTML(idx);
-  addBtn.insertAdjacentHTML('beforebegin', extraRowHTML(idx));
+  el.insertAdjacentHTML('beforeend',extraRowHTML('',''));
 }
+
 function checkExtrasFilled(){
   const el=document.getElementById('extras-list');
   const rows=el.querySelectorAll('.extra-row');
   let allFilled=true;
-  rows.forEach(r=>{
-    const n=r.querySelector('.extra-name').value.trim();
-    const p=r.querySelector('.extra-price').value.trim();
+  const last=rows[rows.length-1];
+  if(last){
+    const n=last.querySelector('.extra-name').value.trim();
+    const p=last.querySelector('.extra-price').value.trim();
     if(!n||!p) allFilled=false;
-  });
-  if(rows.length>0&&allFilled) addExtraRow();
+  }
+  if(!rows.length||allFilled) addExtraRow();
 }
 
 // ═══ 启动 ═══
