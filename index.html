@@ -190,7 +190,7 @@ select.form-input{background:#fff;padding-right:8px}
       </div>
 
       <div class="form-group"><label>备注（可选）</label><input class="form-input" id="win-note" placeholder="如：做短 10cm"></div>
-      <button class="btn btn-primary" id="add-win-btn" onclick="addWindow()">➕ 添加这扇窗</button>
+      <button class="btn btn-primary" id="add-win-btn" onclick="onAddOrSave()">➕ 添加这扇窗</button>
       <button class="btn btn-outline btn-sm" id="cancel-edit-btn" onclick="cancelEdit()" style="display:none;margin-top:6px;">取消编辑</button>
       <div class="btn-group" style="margin-top:20px;">
         <button class="btn btn-success" onclick="finishOrder()">✅ 完成，查看总汇</button>
@@ -479,7 +479,6 @@ function editWindow(i){
   // 切换按钮
   const btn=document.getElementById('add-win-btn');
   btn.textContent='✅ 保存修改';
-  btn.onclick=saveEdit;
   document.getElementById('cancel-edit-btn').style.display='block';
   renderWindows();
   // 滚动到表单区
@@ -523,7 +522,6 @@ function resetForm(){
   document.getElementById('win-has-extras').checked=false;toggleExtras();
   const btn=document.getElementById('add-win-btn');
   btn.textContent='➕ 添加这扇窗';
-  btn.onclick=addWindow;
   document.getElementById('cancel-edit-btn').style.display='none';
 }
 
@@ -603,6 +601,15 @@ function addWindow(){
   document.getElementById('win-note').value='';
   renderWindows();
   toast('✅ 已添加');
+}
+
+/** 按钮统一入口：根据 editIndex 决定新增还是保存 */
+function onAddOrSave(){
+  if(editIndex >= 0){
+    saveEdit();
+  } else {
+    addWindow();
+  }
 }
 
 function finishOrder(){
