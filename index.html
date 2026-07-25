@@ -532,6 +532,8 @@ function gatherFormData(){
   const h=parseFloat(document.getElementById('win-height').value);
   let fp=parseFloat(document.getElementById('win-fabric-tier').value);
   const fw=parseFloat(document.getElementById('win-fabric-weight').value)||2;
+  const noFabric=document.getElementById('win-no-fabric').checked;
+  if(noFabric){fp=0;fw=0;}
   const hs=document.getElementById('win-has-sheer').checked;
   let sp=hs?parseFloat(document.getElementById('win-sheer-tier').value):0;
   const sw=hs?parseFloat(document.getElementById('win-sheer-weight').value)||2:0;
@@ -549,8 +551,6 @@ function gatherFormData(){
 
   // 立边
   const hasSide=document.getElementById('win-has-side').checked;
-  const noFabric=document.getElementById('win-no-fabric').checked;
-  if(noFabric){fp=0;fw=0;}
   // 其他费用
   const extras=[];
   if(document.getElementById('win-has-extras').checked){
